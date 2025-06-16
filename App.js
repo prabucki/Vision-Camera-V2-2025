@@ -5,60 +5,102 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  ScrollView,
-  StatusBar,
+  SafeAreaView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
+  PermissionsAndroid,
+  Platform,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-import {Camera, useCameraDevice} from 'react-native-vision-camera';
-
-
+import {Camera, useCameraDevices} from 'react-native-vision-camera';
 
 function App() {
-  const device = useCameraDevice('back')
+  const [hasPermission, setHasPermission] = useState(false);
+  const devices = useCameraDevices();
+  const device = devices.back;
+
+  useEffect(() => {
+    checkPermissions();
+  }, []);
+
+  const checkPermissions = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const cameraPermission = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Camera Permission',
+            message: 'This app needs access to camera to take photos',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+
+        if (cameraPermission === PermissionsAndroid.RESULTS.GRANTED) {
+          setHasPermission(true);
+        } else {
+          console.log('Camera permission denied');
+        }
+      } else {
+        // For iOS, you would use react-native-vision-camera's permission methods
+        const cameraPermission = await Camera.getCameraPermissionStatus();
+        if (cameraPermission === 'authorized') {
+          setHasPermission(true);
+        } else {
+          const newCameraPermission = await Camera.requestCameraPermission();
+          setHasPermission(newCameraPermission === 'authorized');
+        }
+      }
+    } catch (error) {
+      console.error('Permission error:', error);
+    }
+  };
+
+  if (!hasPermission) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.message}>Camera permission is required</Text>
+      </SafeAreaView>
+    );
+  }
 
   if (device == null) {
-    return null;
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.message}>No camera device found</Text>
+      </SafeAreaView>
+    );
   }
+
   return (
-    <Camera
-      style={StyleSheet.absoluteFill}
-      device={device}
-      isActive={true}
-    />
-  )
+    <SafeAreaView style={styles.container}>
+      <Text style={{color: 'white', position: 'absolute', top: 50, left: 20, zIndex: 1}}>Camera Active</Text>
+      <Camera
+        style={styles.camera}
+        device={device}
+        isActive={true}
+      />
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  camera: {
+    flex: 1,
   },
-  sectionDescription: {
-    marginTop: 8,
+  message: {
+    textAlign: 'center',
+    paddingBottom: 10,
     fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+    color: '#000',
+    marginTop: 50,
   },
 });
 
