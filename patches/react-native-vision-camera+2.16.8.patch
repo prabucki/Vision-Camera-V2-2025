@@ -44,7 +44,7 @@ index db25ea7..f551e79 100644
          ${FBJNI_LIB}
          ${FOLLY_LIB}
 diff --git a/node_modules/react-native-vision-camera/android/build.gradle b/node_modules/react-native-vision-camera/android/build.gradle
-index ddfa243..702bb31 100644
+index ddfa243..76bd41c 100644
 --- a/node_modules/react-native-vision-camera/android/build.gradle
 +++ b/node_modules/react-native-vision-camera/android/build.gradle
 @@ -114,7 +114,7 @@ def resolveBuildType() {
@@ -56,58 +56,15 @@ index ddfa243..702bb31 100644
  def disableFrameProcessors = rootProject.ext.has("disableFrameProcessors") ? rootProject.ext.get("disableFrameProcessors").asBoolean() : false
  def ENABLE_FRAME_PROCESSORS = hasReanimated3 && !disableFrameProcessors
  
-@@ -334,13 +334,13 @@ if (ENABLE_FRAME_PROCESSORS) {
+@@ -334,7 +334,7 @@ if (ENABLE_FRAME_PROCESSORS) {
    def thirdPartyVersions = new Properties()
    thirdPartyVersions.load(new FileInputStream(thirdPartyVersionsFile))
  
 -  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"]
 +  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"] ?: "1_76_0"
    def boost_file = new File(downloadsDir, "boost_${BOOST_VERSION}.tar.gz")
--  def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"]
-+  def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"] ?: "3.1.5"
+   def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"]
    def double_conversion_file = new File(downloadsDir, "double-conversion-${DOUBLE_CONVERSION_VERSION}.tar.gz")
--  def FOLLY_VERSION = thirdPartyVersions["FOLLY_VERSION"]
-+  def FOLLY_VERSION = thirdPartyVersions["FOLLY_VERSION"] ?: "2021.07.22.00"
-   def folly_file = new File(downloadsDir, "folly-${FOLLY_VERSION}.tar.gz")
--  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"]
-+  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"] ?: "0.3.5"
-   def glog_file = new File(downloadsDir, "glog-${GLOG_VERSION}.tar.gz")
- 
-   task createNativeDepsDirectories {
-diff --git a/node_modules/react-native-vision-camera/android/src/main/cpp/FrameProcessorRuntimeManager.cpp b/node_modules/react-native-vision-camera/android/src/main/cpp/FrameProcessorRuntimeManager.cpp
-index 89ddf95..e4b01a7 100644
---- a/node_modules/react-native-vision-camera/android/src/main/cpp/FrameProcessorRuntimeManager.cpp
-+++ b/node_modules/react-native-vision-camera/android/src/main/cpp/FrameProcessorRuntimeManager.cpp
-@@ -14,6 +14,7 @@
- #include "VisionCameraScheduler.h"
- #include "java-bindings/JImageProxy.h"
- #include "java-bindings/JFrameProcessorPlugin.h"
-+#include <Shareables.h>
- 
- namespace vision {
- 
-@@ -115,7 +116,7 @@ void FrameProcessorRuntimeManager::setFrameProcessor(jsi::Runtime& rnRuntime,
-   // convert jsi::Function to a ShareableValue (can be shared across runtimes)
-   __android_log_write(ANDROID_LOG_INFO, TAG,
-                       "Adapting Shareable value from function (conversion to worklet)...");
--  auto shareableWorklet = reanimated::extractShareableOrThrow<reanimated::ShareableWorklet>(rnRuntime, frameProcessor);
-+  auto shareableWorklet = reanimated::extractShareableOrThrow<reanimated::ShareableWorklet>(rnRuntime, frameProcessor, "[Reanimated] Frame processor must be a worklet function");
-   __android_log_write(ANDROID_LOG_INFO, TAG, "Successfully created worklet!");
- 
-   scheduler_->scheduleOnUI([=]() {
-diff --git a/node_modules/react-native-vision-camera/android/src/main/cpp/FrameProcessorRuntimeManager.h b/node_modules/react-native-vision-camera/android/src/main/cpp/FrameProcessorRuntimeManager.h
-index cd66f76..c22f438 100644
---- a/node_modules/react-native-vision-camera/android/src/main/cpp/FrameProcessorRuntimeManager.h
-+++ b/node_modules/react-native-vision-camera/android/src/main/cpp/FrameProcessorRuntimeManager.h
-@@ -10,7 +10,7 @@
- #include <memory>
- #include <string>
- 
--#include "WorkletRuntime.h"
-+#include <WorkletRuntime.h>
- 
- #include "CameraView.h"
- #include "VisionCameraScheduler.h"
 diff --git a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/frameprocessor/FrameProcessorRuntimeManager.kt b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/frameprocessor/FrameProcessorRuntimeManager.kt
 index 48b85ca..3360430 100644
 --- a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/frameprocessor/FrameProcessorRuntimeManager.kt
