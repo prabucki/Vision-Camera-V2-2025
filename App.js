@@ -15,12 +15,25 @@ import {
   Platform,
 } from 'react-native';
 
-import {Camera, useCameraDevices} from 'react-native-vision-camera';
+import {Camera, useCameraDevices, useFrameProcessor} from 'react-native-vision-camera';
+import { scanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
+import { runOnJS } from 'react-native-reanimated';
 
 function App() {
   const [hasPermission, setHasPermission] = useState(false);
   const devices = useCameraDevices();
   const device = devices.back;
+  const [barcodes, setBarcodes] = useState([]);
+
+  // const [frameProcessor, barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE], {
+  //   checkInverted: true,
+  // });
+
+  const frameProcessor = useFrameProcessor((frame) => {
+    'worklet';
+    const detectedBarcodes = scanBarcodes(frame, [BarcodeFormat.QR_CODE], { checkInverted: true });
+    runOnJS(setBarcodes)(detectedBarcodes);
+  }, []);
 
   useEffect(() => {
     checkPermissions();
@@ -76,6 +89,8 @@ function App() {
     );
   }
 
+  console.log('Detected Barcodes:', barcodes);
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={{color: 'white', position: 'absolute', top: 50, left: 20, zIndex: 1}}>Camera Active</Text>
@@ -83,6 +98,8 @@ function App() {
         style={styles.camera}
         device={device}
         isActive={true}
+        frameProcessor={frameProcessor}
+        frameProcessorFps={5}
       />
     </SafeAreaView>
   );
