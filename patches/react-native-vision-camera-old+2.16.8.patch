@@ -1,11 +1,23 @@
+diff --git a/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec b/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
+index b49f0a3..0e4245b 100644
+--- a/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
++++ b/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
+@@ -39,6 +39,7 @@ Pod::Spec.new do |s|
+   }
+ 
+   s.requires_arc = true
++  s.swift_version = "5.0"
+ 
+   # All source files that should be publicly visible
+   # Note how this does not include headers, since those can nameclash.
 diff --git a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt b/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
-index db25ea7..f551e79 100644
+index 5d69a19..d11dd11 100644
 --- a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
 +++ b/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
 @@ -207,6 +207,32 @@ endif()
-
+ 
  find_package(react-native-reanimated REQUIRED CONFIG)
-
+ 
 +# Find and link worklets library for Reanimated 3.15+
 +# Try multiple possible paths for the worklets library
 +set(WORKLETS_LIB_PATH1 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/debug/copyDebugJniLibsProjectOnly/jni/${ANDROID_ABI}/libworklets.so")
@@ -44,29 +56,29 @@ index db25ea7..f551e79 100644
          ${FBJNI_LIB}
          ${FOLLY_LIB}
 diff --git a/node_modules/react-native-vision-camera-old/android/build.gradle b/node_modules/react-native-vision-camera-old/android/build.gradle
-index ddfa243..76bd41c 100644
+index 82750e5..5045ccb 100644
 --- a/node_modules/react-native-vision-camera-old/android/build.gradle
 +++ b/node_modules/react-native-vision-camera-old/android/build.gradle
 @@ -114,7 +114,7 @@ def resolveBuildType() {
  }
-
+ 
  // WorkletRuntime.h file only exists since Reanimated 3.5.0.
 -def hasReanimated3 = file("${nodeModules}/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntime.h").exists()
 +def hasReanimated3 = file("${nodeModules}/react-native-reanimated/Common/cpp/worklets/WorkletRuntime/WorkletRuntime.h").exists()
  def disableFrameProcessors = rootProject.ext.has("disableFrameProcessors") ? rootProject.ext.get("disableFrameProcessors").asBoolean() : false
  def ENABLE_FRAME_PROCESSORS = hasReanimated3 && !disableFrameProcessors
-
+ 
 @@ -334,7 +334,7 @@ if (ENABLE_FRAME_PROCESSORS) {
    def thirdPartyVersions = new Properties()
    thirdPartyVersions.load(new FileInputStream(thirdPartyVersionsFile))
-
+ 
 -  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"]
 +  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"] ?: "1_76_0"
    def boost_file = new File(downloadsDir, "boost_${BOOST_VERSION}.tar.gz")
    def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"]
    def double_conversion_file = new File(downloadsDir, "double-conversion-${DOUBLE_CONVERSION_VERSION}.tar.gz")
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManager.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManager.kt
-index 48b85ca..3360430 100644
+index 8ce43db..32385ff 100644
 --- a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManager.kt
 +++ b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManager.kt
 @@ -5,6 +5,7 @@ import androidx.annotation.Keep
@@ -80,8 +92,32 @@ index 48b85ca..3360430 100644
 @@ -12,6 +13,7 @@ import com.mrousavy.old.camera.ViewNotFoundError
  import java.lang.ref.WeakReference
  import java.util.concurrent.ExecutorService
-
+ 
 +@OptIn(FrameworkAPI::class)
  @Suppress("KotlinJniMissingFunction") // I use fbjni, Android Studio is not smart enough to realize that.
  class FrameProcessorRuntimeManager(context: ReactApplicationContext, frameProcessorThread: ExecutorService) {
    companion object {
+diff --git a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManager.mm b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManager.mm
+index 88fbc55..f97c7ec 100644
+--- a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManager.mm	
++++ b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManager.mm	
+@@ -36,11 +36,17 @@
+ #import "FrameProcessorCallback.h"
+ #import "../React Utils/JSIUtils.h"
+ 
+-// Forward declarations for the Swift classes
+-__attribute__((objc_runtime_name("_TtC12VisionCameraOld12CameraQueues")))
++// Import the generated Swift header
++// Import the generated Swift header conditionally
++#if __has_include(<VisionCameraOld/VisionCameraOld-Swift.h>)
++#import <VisionCameraOld/VisionCameraOld-Swift.h>
++#else
++// Fallback forward declaration for Swift class
++__attribute__((objc_runtime_name("_TtC15VisionCameraOld12CameraQueues")))
+ @interface CameraQueues : NSObject
+ @property (nonatomic, class, readonly, strong) dispatch_queue_t _Nonnull frameProcessorQueue;
+ @end
++#endif
+ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraView")))
+ @interface CameraView : UIView
+ @property (nonatomic, copy) FrameProcessorCallback _Nullable frameProcessorCallback;

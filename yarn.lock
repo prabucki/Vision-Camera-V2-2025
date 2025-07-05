@@ -6690,7 +6690,7 @@ vary@~1.1.2:
 
 "vision-camera-code-scanner@github:prabucki/vision-camera-code-scanner":
   version "0.2.1"
-  resolved "https://codeload.github.com/prabucki/vision-camera-code-scanner/tar.gz/f88e8fb786897981a82275bba983afe7c4498955"
+  resolved "https://codeload.github.com/prabucki/vision-camera-code-scanner/tar.gz/438e470872d7dd4d086b21f615630b950f30ac6d"
 
 vlq@^1.0.0:
   version "1.0.1"
