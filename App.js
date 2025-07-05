@@ -15,7 +15,7 @@ import {
   Platform,
 } from 'react-native';
 
-import {Camera, useCameraDevices, useFrameProcessor} from 'react-native-vision-camera';
+import {Camera, useCameraDevices, useFrameProcessor} from 'react-native-vision-camera-old';
 import { scanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
 import { runOnJS } from 'react-native-reanimated';
 
