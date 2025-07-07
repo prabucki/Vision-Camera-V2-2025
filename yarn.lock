@@ -5682,9 +5682,9 @@ react-native-reanimated@3.15.5:
     convert-source-map "^2.0.0"
     invariant "^2.2.4"
 
-"react-native-vision-camera-old@github:prabucki/react-native-vision-camera-old#old-package-name":
+"react-native-vision-camera-old@github:prabucki/react-native-vision-camera-old":
   version "2.16.8"
-  resolved "https://codeload.github.com/prabucki/react-native-vision-camera-old/tar.gz/75a24cdc03625d2f75dd7fd6dc9680bc95188327"
+  resolved "https://codeload.github.com/prabucki/react-native-vision-camera-old/tar.gz/fe8182e47a73bd8ca21633ede78c3ff669d0ec3a"
 
 react-native@0.75.4:
   version "0.75.4"

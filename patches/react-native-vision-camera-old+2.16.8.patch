@@ -77,7 +77,7 @@ index 8ce43db..32385ff 100644
 +import com.facebook.react.common.annotations.FrameworkAPI
  import com.facebook.react.turbomodule.core.CallInvokerHolderImpl
  import com.facebook.react.uimanager.UIManagerHelper
- import com.mrousavy.old.camera.CameraView
+ import com.mrousavy.old.camera.CameraViewOld
 @@ -12,6 +13,7 @@ import com.mrousavy.old.camera.ViewNotFoundError
  import java.lang.ref.WeakReference
  import java.util.concurrent.ExecutorService
@@ -107,6 +107,6 @@ index 88fbc55..f97c7ec 100644
  @property (nonatomic, class, readonly, strong) dispatch_queue_t _Nonnull frameProcessorQueue;
  @end
 +#endif
- __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraView")))
- @interface CameraView : UIView
+ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
+ @interface CameraViewOld : UIView
  @property (nonatomic, copy) FrameProcessorCallback _Nullable frameProcessorCallback;
