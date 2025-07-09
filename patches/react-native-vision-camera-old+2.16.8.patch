@@ -3,15 +3,18 @@ diff --git a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt 
 index 5d69a19..d11dd11 100644
 --- a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
 +++ b/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
-@@ -207,6 +207,32 @@ endif()
+@@ -207,6 +207,50 @@ endif()
 
  find_package(react-native-reanimated REQUIRED CONFIG)
 
 +# Find and link worklets library for Reanimated 3.15+
 +# Try multiple possible paths for the worklets library
 +set(WORKLETS_LIB_PATH1 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/debug/copyDebugJniLibsProjectOnly/jni/${ANDROID_ABI}/libworklets.so")
-+set(WORKLETS_LIB_PATH2 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/cmake/debug/obj/${ANDROID_ABI}/libworklets.so")
-+set(WORKLETS_LIB_PATH3 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/debug/jni/${ANDROID_ABI}/libworklets.so")
++set(WORKLETS_LIB_PATH2 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/release/copyReleaseJniLibsProjectOnly/jni/${ANDROID_ABI}/libworklets.so")
++set(WORKLETS_LIB_PATH3 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/cmake/debug/obj/${ANDROID_ABI}/libworklets.so")
++set(WORKLETS_LIB_PATH4 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/cmake/release/obj/${ANDROID_ABI}/libworklets.so")
++set(WORKLETS_LIB_PATH5 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/debug/jni/${ANDROID_ABI}/libworklets.so")
++set(WORKLETS_LIB_PATH6 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/release/jni/${ANDROID_ABI}/libworklets.so")
 +
 +if(EXISTS ${WORKLETS_LIB_PATH1})
 +    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH1}")
@@ -27,6 +30,21 @@ index 5d69a19..d11dd11 100644
 +    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH3}")
 +    add_library(worklets SHARED IMPORTED)
 +    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH3})
++    set(WORKLETS_LIB worklets)
++elseif(EXISTS ${WORKLETS_LIB_PATH4})
++    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH4}")
++    add_library(worklets SHARED IMPORTED)
++    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH4})
++    set(WORKLETS_LIB worklets)
++elseif(EXISTS ${WORKLETS_LIB_PATH5})
++    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH5}")
++    add_library(worklets SHARED IMPORTED)
++    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH5})
++    set(WORKLETS_LIB worklets)
++elseif(EXISTS ${WORKLETS_LIB_PATH6})
++    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH6}")
++    add_library(worklets SHARED IMPORTED)
++    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH6})
 +    set(WORKLETS_LIB worklets)
 +else()
 +    message(STATUS "VisionCameraOld: Worklets library not found, using fallback")
@@ -66,10 +84,10 @@ index 82750e5..5045ccb 100644
    def boost_file = new File(downloadsDir, "boost_${BOOST_VERSION}.tar.gz")
    def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"]
    def double_conversion_file = new File(downloadsDir, "double-conversion-${DOUBLE_CONVERSION_VERSION}.tar.gz")
-diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManager.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManager.kt
+diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
 index 8ce43db..32385ff 100644
---- a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManager.kt
-+++ b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManager.kt
+--- a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
++++ b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
 @@ -5,6 +5,7 @@ import androidx.annotation.Keep
  import com.facebook.jni.HybridData
  import com.facebook.proguard.annotations.DoNotStrip
@@ -84,12 +102,12 @@ index 8ce43db..32385ff 100644
 
 +@OptIn(FrameworkAPI::class)
  @Suppress("KotlinJniMissingFunction") // I use fbjni, Android Studio is not smart enough to realize that.
- class FrameProcessorRuntimeManager(context: ReactApplicationContext, frameProcessorThread: ExecutorService) {
+ class FrameProcessorRuntimeManagerOld(context: ReactApplicationContext, frameProcessorThread: ExecutorService) {
    companion object {
-diff --git a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManager.mm b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManager.mm
+diff --git a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
 index 88fbc55..f97c7ec 100644
---- a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManager.mm
-+++ b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManager.mm
+--- a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
++++ b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
 @@ -36,11 +36,17 @@
  #import "FrameProcessorCallback.h"
  #import "../React Utils/JSIUtils.h"
@@ -110,3 +128,23 @@ index 88fbc55..f97c7ec 100644
  __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
  @interface CameraViewOld : UIView
  @property (nonatomic, copy) FrameProcessorCallback _Nullable frameProcessorCallback;
+diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
+index 8ce43db..32385ff 100644
+--- a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
++++ b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
+@@ -5,6 +5,7 @@ import androidx.annotation.Keep
+ import com.facebook.jni.HybridData
+ import com.facebook.proguard.annotations.DoNotStrip
+ import com.facebook.react.bridge.ReactApplicationContext
++import com.facebook.react.common.annotations.FrameworkAPI
+ import com.facebook.react.turbomodule.core.CallInvokerHolderImpl
+ import com.facebook.react.uimanager.UIManagerHelper
+ import com.mrousavy.old.camera.CameraViewOld
+@@ -12,6 +13,7 @@ import com.mrousavy.old.camera.ViewNotFoundError
+ import java.lang.ref.WeakReference
+ import java.util.concurrent.ExecutorService
+
++@OptIn(FrameworkAPI::class)
+ @Suppress("KotlinJniMissingFunction") // I use fbjni, Android Studio is not smart enough to realize that.
+ class FrameProcessorRuntimeManagerOld(context: ReactApplicationContext, frameProcessorThread: ExecutorService) {
+   companion object {
