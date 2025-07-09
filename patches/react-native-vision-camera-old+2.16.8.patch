@@ -1,28 +1,25 @@
-diff --git a/node_modules/react-native-vision-camera-old/.DS_Store b/node_modules/react-native-vision-camera-old/.DS_Store
-new file mode 100644
-index 0000000..3542422
-Binary files /dev/null and b/node_modules/react-native-vision-camera-old/.DS_Store differ
 diff --git a/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec b/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
-index 84b9f49..da86b42 100644
+index 84b9f49..573abe9 100644
 --- a/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
 +++ b/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
-@@ -28,7 +28,7 @@ Pod::Spec.new do |s|
- 
+@@ -28,8 +28,7 @@ Pod::Spec.new do |s|
+
    s.pod_target_xcconfig = {
      "USE_HEADERMAP" => "YES",
 -    "HEADER_SEARCH_PATHS" => "\"$(PODS_TARGET_SRCROOT)/ReactCommon\" \"$(PODS_TARGET_SRCROOT)\" \"$(PODS_ROOT)/RCT-Folly\" \"$(PODS_ROOT)/boost\" \"$(PODS_ROOT)/boost-for-react-native\" \"$(PODS_ROOT)/DoubleConversion\" \"$(PODS_ROOT)/Headers/Private/React-Core\" ",
-+    "HEADER_SEARCH_PATHS" => "\"$(PODS_TARGET_SRCROOT)/ReactCommon\" \"$(PODS_TARGET_SRCROOT)\" \"$(PODS_ROOT)/RCT-Folly\" \"$(PODS_ROOT)/boost\" \"$(PODS_ROOT)/boost-for-react-native\" \"$(PODS_ROOT)/DoubleConversion\" \"$(PODS_ROOT)/Headers/Private/React-Core\" \"$(PODS_ROOT)/../../node_modules/react-native-reanimated/Common/cpp\" ",
-     "GCC_PREPROCESSOR_DEFINITIONS[config=Release]" => "$(inherited) NDEBUG=1"
+-    "GCC_PREPROCESSOR_DEFINITIONS[config=Release]" => "$(inherited) NDEBUG=1"
++    "HEADER_SEARCH_PATHS" => "\"$(PODS_TARGET_SRCROOT)/ReactCommon\" \"$(PODS_TARGET_SRCROOT)\" \"$(PODS_ROOT)/RCT-Folly\" \"$(PODS_ROOT)/boost\" \"$(PODS_ROOT)/boost-for-react-native\" \"$(PODS_ROOT)/DoubleConversion\" \"$(PODS_ROOT)/Headers/Private/React-Core\" \"$(PODS_ROOT)/../../node_modules/react-native-reanimated/Common/cpp\" ",    "GCC_PREPROCESSOR_DEFINITIONS[config=Release]" => "$(inherited) NDEBUG=1"
    }
    s.compiler_flags = folly_compiler_flags + ' ' + boost_compiler_flags
-@@ -65,4 +65,5 @@ Pod::Spec.new do |s|
+   s.xcconfig = {
+@@ -65,4 +64,5 @@ Pod::Spec.new do |s|
    s.dependency "React-callinvoker"
    s.dependency "React"
    s.dependency "React-Core"
 +  s.dependency "RNReanimated"
  end
 diff --git a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt b/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
-index 2ac94ef..ba5eecf 100644
+index 2ac94ef..dff8146 100644
 --- a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
 +++ b/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
 @@ -61,6 +61,7 @@ if(${REACT_NATIVE_VERSION} GREATER_EQUAL 71)
@@ -40,88 +37,133 @@ index 2ac94ef..ba5eecf 100644
 +                "${NODE_MODULES_DIR}/react-native-reanimated/Common/cpp"
          )
  endif()
- 
-@@ -207,6 +209,50 @@ endif()
- 
- find_package(react-native-reanimated REQUIRED CONFIG)
- 
-+# Find and link worklets library for Reanimated 3.15+
-+# Try multiple possible paths for the worklets library
-+set(WORKLETS_LIB_PATH1 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/debug/copyDebugJniLibsProjectOnly/jni/${ANDROID_ABI}/libworklets.so")
-+set(WORKLETS_LIB_PATH2 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/release/copyReleaseJniLibsProjectOnly/jni/${ANDROID_ABI}/libworklets.so")
-+set(WORKLETS_LIB_PATH3 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/cmake/debug/obj/${ANDROID_ABI}/libworklets.so")
-+set(WORKLETS_LIB_PATH4 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/cmake/release/obj/${ANDROID_ABI}/libworklets.so")
-+set(WORKLETS_LIB_PATH5 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/debug/jni/${ANDROID_ABI}/libworklets.so")
-+set(WORKLETS_LIB_PATH6 "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/library_jni/release/jni/${ANDROID_ABI}/libworklets.so")
-+
-+if(EXISTS ${WORKLETS_LIB_PATH1})
-+    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH1}")
-+    add_library(worklets SHARED IMPORTED)
-+    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH1})
-+    set(WORKLETS_LIB worklets)
-+elseif(EXISTS ${WORKLETS_LIB_PATH2})
-+    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH2}")
-+    add_library(worklets SHARED IMPORTED)
-+    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH2})
-+    set(WORKLETS_LIB worklets)
-+elseif(EXISTS ${WORKLETS_LIB_PATH3})
-+    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH3}")
-+    add_library(worklets SHARED IMPORTED)
-+    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH3})
-+    set(WORKLETS_LIB worklets)
-+elseif(EXISTS ${WORKLETS_LIB_PATH4})
-+    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH4}")
-+    add_library(worklets SHARED IMPORTED)
-+    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH4})
-+    set(WORKLETS_LIB worklets)
-+elseif(EXISTS ${WORKLETS_LIB_PATH5})
-+    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH5}")
-+    add_library(worklets SHARED IMPORTED)
-+    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH5})
-+    set(WORKLETS_LIB worklets)
-+elseif(EXISTS ${WORKLETS_LIB_PATH6})
-+    message(STATUS "VisionCameraOld: Found worklets library at ${WORKLETS_LIB_PATH6}")
-+    add_library(worklets SHARED IMPORTED)
-+    set_target_properties(worklets PROPERTIES IMPORTED_LOCATION ${WORKLETS_LIB_PATH6})
-+    set(WORKLETS_LIB worklets)
-+else()
-+    message(STATUS "VisionCameraOld: Worklets library not found, using fallback")
-+    set(WORKLETS_LIB "")
-+endif()
-+
+
+@@ -183,7 +185,17 @@ if(${REACT_NATIVE_VERSION} LESS 71)
+         )
+ endif()
+
+-if(${REACT_NATIVE_VERSION} GREATER_EQUAL 71)
++if(${REACT_NATIVE_VERSION} GREATER_EQUAL 76)
++        # React Native 0.76+ uses merged libraries (libreactnative.so)
++        target_link_libraries(
++                ${PACKAGE_NAME}
++                ReactAndroid::jsi
++                ReactAndroid::reactnative
++                fbjni::fbjni
++                ${REANIMATED_LIB}
++                ${WORKLETS_LIB}
++        )
++elseif(${REACT_NATIVE_VERSION} GREATER_EQUAL 71)
+         target_link_libraries(
+                 ${PACKAGE_NAME}
+                 ReactAndroid::folly_runtime
+@@ -205,22 +217,47 @@ else()
+         )
+ endif()
+
+-find_package(react-native-reanimated REQUIRED CONFIG)
+-
  find_library(
          LOG_LIB
          log
-@@ -219,6 +265,7 @@ target_link_libraries(
-         ${LOG_LIB}
-         ${JSI_LIB}
-         react-native-reanimated::reanimated
-+        ${WORKLETS_LIB}
-         ${REACT_NATIVE_JNI_LIB}
-         ${FBJNI_LIB}
-         ${FOLLY_LIB}
+ )
+
++# Find reanimated libraries
++find_library(
++        REANIMATED_LIB
++        reanimated
++        PATHS "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/cmake/debug/obj/${ANDROID_ABI}"
++        NO_CMAKE_FIND_ROOT_PATH
++)
++
++find_library(
++        WORKLETS_LIB
++        worklets
++        PATHS "${NODE_MODULES_DIR}/react-native-reanimated/android/build/intermediates/cmake/debug/obj/${ANDROID_ABI}"
++        NO_CMAKE_FIND_ROOT_PATH
++)
++
+ # linking
+ message(WARNING "VisionCameraOld linking: FOR_HERMES=${FOR_HERMES}")
+-target_link_libraries(
+-        ${PACKAGE_NAME}
+-        ${LOG_LIB}
+-        ${JSI_LIB}
+-        react-native-reanimated::reanimated
+-        ${REACT_NATIVE_JNI_LIB}
+-        ${FBJNI_LIB}
+-        ${FOLLY_LIB}
+-        android
+-)
++if(${REACT_NATIVE_VERSION} LESS 76)
++        target_link_libraries(
++                ${PACKAGE_NAME}
++                ${LOG_LIB}
++                ${JSI_LIB}
++                ${REANIMATED_LIB}
++                ${WORKLETS_LIB}
++                ${REACT_NATIVE_JNI_LIB}
++                ${FBJNI_LIB}
++                ${FOLLY_LIB}
++                android
++        )
++else()
++        # React Native 0.76+ - only link additional libraries not already included above
++        target_link_libraries(
++                ${PACKAGE_NAME}
++                ${LOG_LIB}
++                ${REANIMATED_LIB}
++                ${WORKLETS_LIB}
++                android
++        )
++endif()
 diff --git a/node_modules/react-native-vision-camera-old/android/build.gradle b/node_modules/react-native-vision-camera-old/android/build.gradle
-index 82750e5..5045ccb 100644
+index 82750e5..440db3a 100644
 --- a/node_modules/react-native-vision-camera-old/android/build.gradle
 +++ b/node_modules/react-native-vision-camera-old/android/build.gradle
 @@ -114,7 +114,7 @@ def resolveBuildType() {
  }
- 
+
  // WorkletRuntime.h file only exists since Reanimated 3.5.0.
 -def hasReanimated3 = file("${nodeModules}/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntime.h").exists()
 +def hasReanimated3 = file("${nodeModules}/react-native-reanimated/Common/cpp/worklets/WorkletRuntime/WorkletRuntime.h").exists()
  def disableFrameProcessors = rootProject.ext.has("disableFrameProcessors") ? rootProject.ext.get("disableFrameProcessors").asBoolean() : false
  def ENABLE_FRAME_PROCESSORS = hasReanimated3 && !disableFrameProcessors
- 
-@@ -334,7 +334,7 @@ if (ENABLE_FRAME_PROCESSORS) {
+
+@@ -182,6 +182,8 @@ android {
+                 "**/libhermes.so",
+                 "**/libfolly_runtime.so",
+                 "**/libglog.so",
++                "**/libreactnative.so",
++                "**/libworklets.so",
+     ]
+     // META-INF is duplicate by CameraX.
+     exclude "META-INF/**"
+@@ -332,15 +334,19 @@ if (ENABLE_FRAME_PROCESSORS) {
+   def thirdPartyNdkDir = new File("$buildDir/third-party-ndk")
+   def thirdPartyVersionsFile = new File("${nodeModules}/react-native/ReactAndroid/gradle.properties")
    def thirdPartyVersions = new Properties()
-   thirdPartyVersions.load(new FileInputStream(thirdPartyVersionsFile))
- 
+-  thirdPartyVersions.load(new FileInputStream(thirdPartyVersionsFile))
+
 -  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"]
-+  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"] ?: "1_76_0"
++  // Try to load versions from gradle.properties, but provide fallbacks for RN 0.76+
++  if (thirdPartyVersionsFile.exists()) {
++    thirdPartyVersions.load(new FileInputStream(thirdPartyVersionsFile))
++  }
++
++  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"] ?: "1_84_0"
    def boost_file = new File(downloadsDir, "boost_${BOOST_VERSION}.tar.gz")
-   def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"]
+-  def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"]
++  def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"] ?: "3.3.0"
    def double_conversion_file = new File(downloadsDir, "double-conversion-${DOUBLE_CONVERSION_VERSION}.tar.gz")
+-  def FOLLY_VERSION = thirdPartyVersions["FOLLY_VERSION"]
++  def FOLLY_VERSION = thirdPartyVersions["FOLLY_VERSION"] ?: "2024.01.01.00"
+   def folly_file = new File(downloadsDir, "folly-${FOLLY_VERSION}.tar.gz")
+-  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"]
++  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"] ?: "0.3.5"
+   def glog_file = new File(downloadsDir, "glog-${GLOG_VERSION}.tar.gz")
+
+   task createNativeDepsDirectories {
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp b/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp
 index d5a847d..5909302 100644
 --- a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp
@@ -129,12 +171,12 @@ index d5a847d..5909302 100644
 @@ -102,7 +102,7 @@ void FrameProcessorRuntimeManagerOld::setFrameProcessor(jsi::Runtime& rnRuntime,
    __android_log_write(ANDROID_LOG_INFO, TAG,
                        "Setting new Frame Processor...");
- 
+
 -  workletRuntime_ = reanimated::extractWorkletRuntime(rnRuntime, workletRuntimeValue);
 +  workletRuntime_ = worklets::extractWorkletRuntime(rnRuntime, workletRuntimeValue);
    jsi::Runtime &visionRuntime = workletRuntime_->getJSIRuntime();
    visionRuntime.global().setProperty(visionRuntime, "_FRAME_PROCESSOR", jsi::Value(true));
- 
+
 @@ -115,7 +115,7 @@ void FrameProcessorRuntimeManagerOld::setFrameProcessor(jsi::Runtime& rnRuntime,
    // convert jsi::Function to a ShareableValue (can be shared across runtimes)
    __android_log_write(ANDROID_LOG_INFO, TAG,
@@ -142,7 +184,7 @@ index d5a847d..5909302 100644
 -  auto shareableWorklet = reanimated::extractShareableOrThrow<reanimated::ShareableWorklet>(rnRuntime, frameProcessor);
 +  auto shareableWorklet = worklets::extractShareableOrThrow<worklets::ShareableWorklet>(rnRuntime, frameProcessor);
    __android_log_write(ANDROID_LOG_INFO, TAG, "Successfully created worklet!");
- 
+
    scheduler_->scheduleOnUI([=]() {
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.h b/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.h
 index dac15d5..7d3e635 100644
@@ -151,11 +193,11 @@ index dac15d5..7d3e635 100644
 @@ -10,7 +10,8 @@
  #include <memory>
  #include <string>
- 
+
 -#include "WorkletRuntime.h"
 +#include "worklets/WorkletRuntime/WorkletRuntime.h"
 +#include "worklets/SharedItems/Shareables.h"
- 
+
  #include "CameraViewOld.h"
  #include "VisionCameraOldScheduler.h"
 @@ -45,7 +46,7 @@ class FrameProcessorRuntimeManagerOld : public jni::HybridClass<FrameProcessorRu
@@ -165,7 +207,7 @@ index dac15d5..7d3e635 100644
 -  std::shared_ptr<reanimated::WorkletRuntime> workletRuntime_;
 +  std::shared_ptr<worklets::WorkletRuntime> workletRuntime_;
    std::shared_ptr<vision::VisionCameraOldScheduler> scheduler_;
- 
+
    jni::global_ref<CameraViewOld::javaobject> findCameraViewOldById(int viewId);
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
 index 9c2f651..5f804bf 100644
@@ -182,21 +224,18 @@ index 9c2f651..5f804bf 100644
 @@ -12,6 +13,7 @@ import com.mrousavy.old.camera.ViewNotFoundError
  import java.lang.ref.WeakReference
  import java.util.concurrent.ExecutorService
- 
+
 +@OptIn(FrameworkAPI::class)
  @Suppress("KotlinJniMissingFunction") // I use fbjni, Android Studio is not smart enough to realize that.
  class FrameProcessorRuntimeManagerOld(context: ReactApplicationContext, frameProcessorThread: ExecutorService) {
    companion object {
-diff --git a/node_modules/react-native-vision-camera-old/ios/.DS_Store b/node_modules/react-native-vision-camera-old/ios/.DS_Store
-new file mode 100644
-index 0000000..e69de29
 diff --git a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
 index ae302d3..e532a13 100644
---- a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm	
-+++ b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm	
+--- a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
++++ b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
 @@ -20,27 +20,39 @@
  #import <ReactCommon/RCTTurboModuleManager.h>
- 
+
  #ifndef VISION_CAMERA_DISABLE_FRAME_PROCESSORS
 -  #if __has_include(<RNReanimated/NativeReanimatedModule.h>)
 -    #if __has_include(<RNReanimated/WorkletRuntime.h>)
@@ -219,10 +258,10 @@ index ae302d3..e532a13 100644
 +    #warning REAModule.h header could not be found, Frame Processors are disabled. If you want to use Frame Processors, make sure you install react-native-reanimated 3.5.0 or above!
    #endif
  #endif
- 
+
  #import "FrameProcessorCallback.h"
  #import "../React Utils/JSIUtils.h"
- 
+
 -// Forward declarations for the Swift classes
 -__attribute__((objc_runtime_name("_TtC12VisionCameraOld12CameraQueues")))
 +// Import the generated Swift header
@@ -240,7 +279,7 @@ index ae302d3..e532a13 100644
  @interface CameraViewOld : UIView
  @property (nonatomic, copy) FrameProcessorCallback _Nullable frameProcessorCallback;
 @@ -48,7 +60,7 @@ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
- 
+
  @implementation FrameProcessorRuntimeManagerOld {
  #ifdef ENABLE_FRAME_PROCESSORS
 -  std::shared_ptr<reanimated::WorkletRuntime> workletRuntime;
@@ -255,25 +294,25 @@ index ae302d3..e532a13 100644
 -    self->workletRuntime = reanimated::extractWorkletRuntime(rnRuntime, arguments[2].asObject(rnRuntime));
 +    self->workletRuntime = worklets::extractWorkletRuntime(rnRuntime, arguments[2].asObject(rnRuntime));
      jsi::Runtime &visionRuntime = self->workletRuntime->getJSIRuntime();
- 
+
      // TODO: call reanimated::RuntimeDecorator::decorateRuntime(*runtime, "FRAME_PROCESSOR");
 @@ -129,7 +141,7 @@ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
      auto viewTag = arguments[0].asNumber();
      NSLog(@"FrameProcessorBindings: Adapting Shareable value from function (conversion to worklet)...");
- 
+
 -    auto worklet = reanimated::extractShareableOrThrow<reanimated::ShareableWorklet>(rnRuntime, arguments[1].asObject(rnRuntime));
 +    auto worklet = worklets::extractShareableOrThrow<worklets::ShareableWorklet>(rnRuntime, arguments[1].asObject(rnRuntime));
      NSLog(@"FrameProcessorBindings: Successfully created worklet!");
- 
+
      RCTExecuteOnMainQueue([=]() {
 @@ -140,8 +152,8 @@ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
        dispatch_async(CameraQueues.frameProcessorQueue, [=]() {
          NSLog(@"FrameProcessorBindings: Converting worklet to Objective-C callback...");
- 
+
 -        std::weak_ptr<reanimated::WorkletRuntime> weakWorkletRuntime = workletRuntime;
 -        std::weak_ptr<reanimated::ShareableWorklet> weakShareableWorklet = worklet;
 +        std::weak_ptr<worklets::WorkletRuntime> weakWorkletRuntime = workletRuntime;
 +        std::weak_ptr<worklets::ShareableWorklet> weakShareableWorklet = worklet;
- 
+
          view.frameProcessorCallback = ^(FrameOld* frame) {
            auto workletRuntime = weakWorkletRuntime.lock();
