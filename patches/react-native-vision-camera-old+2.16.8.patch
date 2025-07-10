@@ -3,7 +3,7 @@ index 84b9f49..573abe9 100644
 --- a/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
 +++ b/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
 @@ -28,8 +28,7 @@ Pod::Spec.new do |s|
- 
+
    s.pod_target_xcconfig = {
      "USE_HEADERMAP" => "YES",
 -    "HEADER_SEARCH_PATHS" => "\"$(PODS_TARGET_SRCROOT)/ReactCommon\" \"$(PODS_TARGET_SRCROOT)\" \"$(PODS_ROOT)/RCT-Folly\" \"$(PODS_ROOT)/boost\" \"$(PODS_ROOT)/boost-for-react-native\" \"$(PODS_ROOT)/DoubleConversion\" \"$(PODS_ROOT)/Headers/Private/React-Core\" ",
@@ -18,26 +18,6 @@ index 84b9f49..573abe9 100644
    s.dependency "React-Core"
 +  s.dependency "RNReanimated"
  end
-diff --git a/node_modules/react-native-vision-camera-old/android/.project b/node_modules/react-native-vision-camera-old/android/.project
-index 0e0a1ba..248e459 100644
---- a/node_modules/react-native-vision-camera-old/android/.project
-+++ b/node_modules/react-native-vision-camera-old/android/.project
-@@ -14,4 +14,15 @@
- 	<natures>
- 		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
- 	</natures>
-+	<filteredResources>
-+		<filter>
-+			<id>1752152425138</id>
-+			<name></name>
-+			<type>30</type>
-+			<matcher>
-+				<id>org.eclipse.core.resources.regexFilterMatcher</id>
-+				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
-+			</matcher>
-+		</filter>
-+	</filteredResources>
- </projectDescription>
 diff --git a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt b/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
 index 2ac94ef..dff8146 100644
 --- a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
@@ -57,11 +37,11 @@ index 2ac94ef..dff8146 100644
 +                "${NODE_MODULES_DIR}/react-native-reanimated/Common/cpp"
          )
  endif()
- 
+
 @@ -183,7 +185,17 @@ if(${REACT_NATIVE_VERSION} LESS 71)
          )
  endif()
- 
+
 -if(${REACT_NATIVE_VERSION} GREATER_EQUAL 71)
 +if(${REACT_NATIVE_VERSION} GREATER_EQUAL 76)
 +        # React Native 0.76+ uses merged libraries (libreactnative.so)
@@ -80,14 +60,14 @@ index 2ac94ef..dff8146 100644
 @@ -205,22 +217,47 @@ else()
          )
  endif()
- 
+
 -find_package(react-native-reanimated REQUIRED CONFIG)
 -
  find_library(
          LOG_LIB
          log
  )
- 
+
 +# Find reanimated libraries
 +find_library(
 +        REANIMATED_LIB
@@ -143,13 +123,13 @@ index 82750e5..440db3a 100644
 +++ b/node_modules/react-native-vision-camera-old/android/build.gradle
 @@ -114,7 +114,7 @@ def resolveBuildType() {
  }
- 
+
  // WorkletRuntime.h file only exists since Reanimated 3.5.0.
 -def hasReanimated3 = file("${nodeModules}/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntime.h").exists()
 +def hasReanimated3 = file("${nodeModules}/react-native-reanimated/Common/cpp/worklets/WorkletRuntime/WorkletRuntime.h").exists()
  def disableFrameProcessors = rootProject.ext.has("disableFrameProcessors") ? rootProject.ext.get("disableFrameProcessors").asBoolean() : false
  def ENABLE_FRAME_PROCESSORS = hasReanimated3 && !disableFrameProcessors
- 
+
 @@ -182,6 +182,8 @@ android {
                  "**/libhermes.so",
                  "**/libfolly_runtime.so",
@@ -164,7 +144,7 @@ index 82750e5..440db3a 100644
    def thirdPartyVersionsFile = new File("${nodeModules}/react-native/ReactAndroid/gradle.properties")
    def thirdPartyVersions = new Properties()
 -  thirdPartyVersions.load(new FileInputStream(thirdPartyVersionsFile))
- 
+
 -  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"]
 +  // Try to load versions from gradle.properties, but provide fallbacks for RN 0.76+
 +  if (thirdPartyVersionsFile.exists()) {
@@ -182,247 +162,8 @@ index 82750e5..440db3a 100644
 -  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"]
 +  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"] ?: "0.3.5"
    def glog_file = new File(downloadsDir, "glog-${GLOG_VERSION}.tar.gz")
- 
+
    task createNativeDepsDirectories {
-diff --git a/node_modules/react-native-vision-camera-old/android/build/generated/source/buildConfig/debug/com/mrousavy/old/camera/BuildConfig.java b/node_modules/react-native-vision-camera-old/android/build/generated/source/buildConfig/debug/com/mrousavy/old/camera/BuildConfig.java
-new file mode 100644
-index 0000000..3a10eb5
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/generated/source/buildConfig/debug/com/mrousavy/old/camera/BuildConfig.java
-@@ -0,0 +1,10 @@
-+/**
-+ * Automatically generated file. DO NOT MODIFY
-+ */
-+package com.mrousavy.old.camera;
-+
-+public final class BuildConfig {
-+  public static final boolean DEBUG = Boolean.parseBoolean("true");
-+  public static final String LIBRARY_PACKAGE_NAME = "com.mrousavy.old.camera";
-+  public static final String BUILD_TYPE = "debug";
-+}
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml b/node_modules/react-native-vision-camera-old/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
-new file mode 100644
-index 0000000..00f6043
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
-@@ -0,0 +1,7 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-+    package="com.mrousavy.old.camera" >
-+
-+    <uses-sdk android:minSdkVersion="24" />
-+
-+</manifest>
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json b/node_modules/react-native-vision-camera-old/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
-new file mode 100644
-index 0000000..ce4b48b
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
-@@ -0,0 +1,18 @@
-+{
-+  "version": 3,
-+  "artifactType": {
-+    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
-+    "kind": "Directory"
-+  },
-+  "applicationId": "com.mrousavy.old.camera",
-+  "variantName": "debug",
-+  "elements": [
-+    {
-+      "type": "SINGLE",
-+      "filters": [],
-+      "attributes": [],
-+      "outputFile": "AndroidManifest.xml"
-+    }
-+  ],
-+  "elementType": "File"
-+}
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/react-native-vision-camera-old/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
-new file mode 100644
-index 0000000..1211b1e
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
-@@ -0,0 +1,6 @@
-+aarFormatVersion=1.0
-+aarMetadataVersion=1.0
-+minCompileSdk=1
-+minCompileSdkExtension=0
-+minAndroidGradlePluginVersion=1.0.0
-+coreLibraryDesugaringEnabled=false
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json b/node_modules/react-native-vision-camera-old/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
-new file mode 100644
-index 0000000..9e26dfe
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
-@@ -0,0 +1 @@
-+{}
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/react-native-vision-camera-old/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
-new file mode 100644
-index 0000000..91e809d
-Binary files /dev/null and b/node_modules/react-native-vision-camera-old/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar differ
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/react-native-vision-camera-old/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
-new file mode 100644
-index 0000000..e69de29
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
-new file mode 100644
-index 0000000..1782871
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
-@@ -0,0 +1 @@
-+#Thu Jul 10 15:38:13 BST 2025
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
-new file mode 100644
-index 0000000..200b193
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
-@@ -0,0 +1,2 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/build/generated/res/resValues/debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/build/generated/res/resValues/debug"/></dataSet><mergedItems/></merger>
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/mergeDebugAssets/merger.xml b/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/mergeDebugAssets/merger.xml
-new file mode 100644
-index 0000000..feeb6b0
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/mergeDebugAssets/merger.xml
-@@ -0,0 +1,2 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/assets"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/debug/assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/build/intermediates/shader_assets/debug/compileDebugShaders/out"/></dataSet></merger>
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
-new file mode 100644
-index 0000000..59830a3
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
-@@ -0,0 +1,2 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/debug/shaders"/></dataSet></merger>
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt b/node_modules/react-native-vision-camera-old/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
-new file mode 100644
-index 0000000..78ac5b8
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
-@@ -0,0 +1,2 @@
-+R_DEF: Internal format may change without notice
-+local
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt b/node_modules/react-native-vision-camera-old/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
-new file mode 100644
-index 0000000..1d84e34
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
-@@ -0,0 +1,7 @@
-+1<?xml version="1.0" encoding="utf-8"?>
-+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-+3    package="com.mrousavy.old.camera" >
-+4
-+5    <uses-sdk android:minSdkVersion="24" />
-+6
-+7</manifest>
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/react-native-vision-camera-old/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
-new file mode 100644
-index 0000000..00f6043
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
-@@ -0,0 +1,7 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-+    package="com.mrousavy.old.camera" >
-+
-+    <uses-sdk android:minSdkVersion="24" />
-+
-+</manifest>
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json b/node_modules/react-native-vision-camera-old/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
-new file mode 100644
-index 0000000..0637a08
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
-@@ -0,0 +1 @@
-+[]
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt b/node_modules/react-native-vision-camera-old/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
-new file mode 100644
-index 0000000..08f4ebe
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
-@@ -0,0 +1 @@
-+0 Warning/Error
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/react-native-vision-camera-old/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
-new file mode 100644
-index 0000000..661c1df
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
-@@ -0,0 +1 @@
-+com.mrousavy.old.camera
-diff --git a/node_modules/react-native-vision-camera-old/android/build/kotlin/compileDebugKotlin/cacheable/dirty-sources.txt b/node_modules/react-native-vision-camera-old/android/build/kotlin/compileDebugKotlin/cacheable/dirty-sources.txt
-new file mode 100644
-index 0000000..6bc9d19
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/kotlin/compileDebugKotlin/cacheable/dirty-sources.txt
-@@ -0,0 +1,31 @@
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+TakeSnapshot.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/Context+displayRotation.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/List+containsAny.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/ImageProxy+save.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/parsers/Size+easy.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorPerformanceDataCollector.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/WritableArray+Nullables.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/WritableMap+Nullables.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/CameraCharacteristicsUtils.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/ImageProxy+isRaw.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/withPromise.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/ExifInterface+buildMetadataMap.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/Errors.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/CallbackPromise.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+Events.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/AspectRatio.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+TakePhoto.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/ImageCapture+suspendables.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/DeviceFormat.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraPackageOld.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOldManager.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/parsers/LenseFacing+String.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOldModule.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/ViewGroup+installHierarchyFitter.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/parsers/ImageFormat+String.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+RecordVideo.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/CameraSelector+byID.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/utils/Size+rotated.kt
-+/Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+Focus.kt
-\ No newline at end of file
-diff --git a/node_modules/react-native-vision-camera-old/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin b/node_modules/react-native-vision-camera-old/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin
-new file mode 100644
-index 0000000..084b44c
-Binary files /dev/null and b/node_modules/react-native-vision-camera-old/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin differ
-diff --git a/node_modules/react-native-vision-camera-old/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/react-native-vision-camera-old/android/build/outputs/logs/manifest-merger-debug-report.txt
-new file mode 100644
-index 0000000..b583a8a
---- /dev/null
-+++ b/node_modules/react-native-vision-camera-old/android/build/outputs/logs/manifest-merger-debug-report.txt
-@@ -0,0 +1,17 @@
-+-- Merging decision tree log ---
-+manifest
-+ADDED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml:1:1-4:12
-+INJECTED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml:1:1-4:12
-+	package
-+		ADDED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml:2:11-44
-+		INJECTED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml
-+	xmlns:android
-+		ADDED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml:1:11-69
-+uses-sdk
-+INJECTED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
-+INJECTED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml
-+INJECTED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml
-+	android:targetSdkVersion
-+		INJECTED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml
-+	android:minSdkVersion
-+		INJECTED from /Users/tom/Downloads/DPD/VisionCamera2Remake/node_modules/react-native-vision-camera-old/android/src/main/AndroidManifest.xml
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp b/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp
 index d5a847d..5909302 100644
 --- a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp
@@ -430,12 +171,12 @@ index d5a847d..5909302 100644
 @@ -102,7 +102,7 @@ void FrameProcessorRuntimeManagerOld::setFrameProcessor(jsi::Runtime& rnRuntime,
    __android_log_write(ANDROID_LOG_INFO, TAG,
                        "Setting new Frame Processor...");
- 
+
 -  workletRuntime_ = reanimated::extractWorkletRuntime(rnRuntime, workletRuntimeValue);
 +  workletRuntime_ = worklets::extractWorkletRuntime(rnRuntime, workletRuntimeValue);
    jsi::Runtime &visionRuntime = workletRuntime_->getJSIRuntime();
    visionRuntime.global().setProperty(visionRuntime, "_FRAME_PROCESSOR", jsi::Value(true));
- 
+
 @@ -115,7 +115,7 @@ void FrameProcessorRuntimeManagerOld::setFrameProcessor(jsi::Runtime& rnRuntime,
    // convert jsi::Function to a ShareableValue (can be shared across runtimes)
    __android_log_write(ANDROID_LOG_INFO, TAG,
@@ -443,7 +184,7 @@ index d5a847d..5909302 100644
 -  auto shareableWorklet = reanimated::extractShareableOrThrow<reanimated::ShareableWorklet>(rnRuntime, frameProcessor);
 +  auto shareableWorklet = worklets::extractShareableOrThrow<worklets::ShareableWorklet>(rnRuntime, frameProcessor);
    __android_log_write(ANDROID_LOG_INFO, TAG, "Successfully created worklet!");
- 
+
    scheduler_->scheduleOnUI([=]() {
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.h b/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.h
 index dac15d5..7d3e635 100644
@@ -452,11 +193,11 @@ index dac15d5..7d3e635 100644
 @@ -10,7 +10,8 @@
  #include <memory>
  #include <string>
- 
+
 -#include "WorkletRuntime.h"
 +#include "worklets/WorkletRuntime/WorkletRuntime.h"
 +#include "worklets/SharedItems/Shareables.h"
- 
+
  #include "CameraViewOld.h"
  #include "VisionCameraOldScheduler.h"
 @@ -45,7 +46,7 @@ class FrameProcessorRuntimeManagerOld : public jni::HybridClass<FrameProcessorRu
@@ -466,7 +207,7 @@ index dac15d5..7d3e635 100644
 -  std::shared_ptr<reanimated::WorkletRuntime> workletRuntime_;
 +  std::shared_ptr<worklets::WorkletRuntime> workletRuntime_;
    std::shared_ptr<vision::VisionCameraOldScheduler> scheduler_;
- 
+
    jni::global_ref<CameraViewOld::javaobject> findCameraViewOldById(int viewId);
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+RecordVideo.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+RecordVideo.kt
 index 909fedd..ae2777e 100644
@@ -475,7 +216,7 @@ index 909fedd..ae2777e 100644
 @@ -49,37 +49,35 @@ fun CameraViewOld.startRecording(options: ReadableMap, onRecordCallback: Callbac
      recording = recording.withAudioEnabled()
    }
- 
+
 -  activeVideoRecording = recording.start(ContextCompat.getMainExecutor(context), object : Consumer<VideoRecordEvent> {
 -    override fun accept(event: VideoRecordEvent?) {
 -      if (event is VideoRecordEvent.Finalize) {
@@ -534,7 +275,7 @@ index 909fedd..ae2777e 100644
 -  })
 +  }
  }
- 
+
  @SuppressLint("RestrictedApi")
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld.kt
 index bf206ae..8e86082 100644
@@ -543,13 +284,13 @@ index bf206ae..8e86082 100644
 @@ -269,9 +269,8 @@ class CameraViewOld(context: Context, private val frameProcessorThread: Executor
    private external fun initHybrid(): HybridData
    private external fun frameProcessorCallback(frame: ImageProxy)
- 
+
 -  override fun getLifecycle(): Lifecycle {
 -    return lifecycleRegistry
 -  }
 +  override val lifecycle: Lifecycle
 +    get() = lifecycleRegistry
- 
+
    /**
     * Updates the custom Lifecycle to match the host activity's lifecycle, and if it's active we narrow it down to the [isActive] and [isAttachedToWindow] fields.
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOldManager.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOldManager.kt
@@ -563,7 +304,7 @@ index 278d5f4..1c4c781 100644
 -      .build()
 +      .build()?.toMutableMap()
    }
- 
+
    override fun getName(): String {
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
 index 9c2f651..5f804bf 100644
@@ -580,18 +321,18 @@ index 9c2f651..5f804bf 100644
 @@ -12,6 +13,7 @@ import com.mrousavy.old.camera.ViewNotFoundError
  import java.lang.ref.WeakReference
  import java.util.concurrent.ExecutorService
- 
+
 +@OptIn(FrameworkAPI::class)
  @Suppress("KotlinJniMissingFunction") // I use fbjni, Android Studio is not smart enough to realize that.
  class FrameProcessorRuntimeManagerOld(context: ReactApplicationContext, frameProcessorThread: ExecutorService) {
    companion object {
 diff --git a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
 index ae302d3..e532a13 100644
---- a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm	
-+++ b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm	
+--- a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
++++ b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
 @@ -20,27 +20,39 @@
  #import <ReactCommon/RCTTurboModuleManager.h>
- 
+
  #ifndef VISION_CAMERA_DISABLE_FRAME_PROCESSORS
 -  #if __has_include(<RNReanimated/NativeReanimatedModule.h>)
 -    #if __has_include(<RNReanimated/WorkletRuntime.h>)
@@ -614,10 +355,10 @@ index ae302d3..e532a13 100644
 +    #warning REAModule.h header could not be found, Frame Processors are disabled. If you want to use Frame Processors, make sure you install react-native-reanimated 3.5.0 or above!
    #endif
  #endif
- 
+
  #import "FrameProcessorCallback.h"
  #import "../React Utils/JSIUtils.h"
- 
+
 -// Forward declarations for the Swift classes
 -__attribute__((objc_runtime_name("_TtC12VisionCameraOld12CameraQueues")))
 +// Import the generated Swift header
@@ -635,7 +376,7 @@ index ae302d3..e532a13 100644
  @interface CameraViewOld : UIView
  @property (nonatomic, copy) FrameProcessorCallback _Nullable frameProcessorCallback;
 @@ -48,7 +60,7 @@ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
- 
+
  @implementation FrameProcessorRuntimeManagerOld {
  #ifdef ENABLE_FRAME_PROCESSORS
 -  std::shared_ptr<reanimated::WorkletRuntime> workletRuntime;
@@ -650,25 +391,25 @@ index ae302d3..e532a13 100644
 -    self->workletRuntime = reanimated::extractWorkletRuntime(rnRuntime, arguments[2].asObject(rnRuntime));
 +    self->workletRuntime = worklets::extractWorkletRuntime(rnRuntime, arguments[2].asObject(rnRuntime));
      jsi::Runtime &visionRuntime = self->workletRuntime->getJSIRuntime();
- 
+
      // TODO: call reanimated::RuntimeDecorator::decorateRuntime(*runtime, "FRAME_PROCESSOR");
 @@ -129,7 +141,7 @@ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
      auto viewTag = arguments[0].asNumber();
      NSLog(@"FrameProcessorBindings: Adapting Shareable value from function (conversion to worklet)...");
- 
+
 -    auto worklet = reanimated::extractShareableOrThrow<reanimated::ShareableWorklet>(rnRuntime, arguments[1].asObject(rnRuntime));
 +    auto worklet = worklets::extractShareableOrThrow<worklets::ShareableWorklet>(rnRuntime, arguments[1].asObject(rnRuntime));
      NSLog(@"FrameProcessorBindings: Successfully created worklet!");
- 
+
      RCTExecuteOnMainQueue([=]() {
 @@ -140,8 +152,8 @@ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
        dispatch_async(CameraQueues.frameProcessorQueue, [=]() {
          NSLog(@"FrameProcessorBindings: Converting worklet to Objective-C callback...");
- 
+
 -        std::weak_ptr<reanimated::WorkletRuntime> weakWorkletRuntime = workletRuntime;
 -        std::weak_ptr<reanimated::ShareableWorklet> weakShareableWorklet = worklet;
 +        std::weak_ptr<worklets::WorkletRuntime> weakWorkletRuntime = workletRuntime;
 +        std::weak_ptr<worklets::ShareableWorklet> weakShareableWorklet = worklet;
- 
+
          view.frameProcessorCallback = ^(FrameOld* frame) {
            auto workletRuntime = weakWorkletRuntime.lock();
