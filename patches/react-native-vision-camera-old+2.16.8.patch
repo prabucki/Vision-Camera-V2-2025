@@ -118,7 +118,7 @@ index 2ac94ef..dff8146 100644
 +        )
 +endif()
 diff --git a/node_modules/react-native-vision-camera-old/android/build.gradle b/node_modules/react-native-vision-camera-old/android/build.gradle
-index 82750e5..440db3a 100644
+index 82750e5..950da42 100644
 --- a/node_modules/react-native-vision-camera-old/android/build.gradle
 +++ b/node_modules/react-native-vision-camera-old/android/build.gradle
 @@ -114,7 +114,7 @@ def resolveBuildType() {
@@ -139,7 +139,7 @@ index 82750e5..440db3a 100644
      ]
      // META-INF is duplicate by CameraX.
      exclude "META-INF/**"
-@@ -332,15 +334,19 @@ if (ENABLE_FRAME_PROCESSORS) {
+@@ -332,9 +334,13 @@ if (ENABLE_FRAME_PROCESSORS) {
    def thirdPartyNdkDir = new File("$buildDir/third-party-ndk")
    def thirdPartyVersionsFile = new File("${nodeModules}/react-native/ReactAndroid/gradle.properties")
    def thirdPartyVersions = new Properties()
@@ -153,17 +153,21 @@ index 82750e5..440db3a 100644
 +
 +  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"] ?: "1_84_0"
    def boost_file = new File(downloadsDir, "boost_${BOOST_VERSION}.tar.gz")
--  def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"]
-+  def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"] ?: "3.3.0"
+   def DOUBLE_CONVERSION_VERSION = thirdPartyVersions["DOUBLE_CONVERSION_VERSION"]
    def double_conversion_file = new File(downloadsDir, "double-conversion-${DOUBLE_CONVERSION_VERSION}.tar.gz")
--  def FOLLY_VERSION = thirdPartyVersions["FOLLY_VERSION"]
-+  def FOLLY_VERSION = thirdPartyVersions["FOLLY_VERSION"] ?: "2024.01.01.00"
-   def folly_file = new File(downloadsDir, "folly-${FOLLY_VERSION}.tar.gz")
--  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"]
-+  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"] ?: "0.3.5"
-   def glog_file = new File(downloadsDir, "glog-${GLOG_VERSION}.tar.gz")
-
-   task createNativeDepsDirectories {
+diff --git a/node_modules/react-native-vision-camera-old/android/gradle.properties b/node_modules/react-native-vision-camera-old/android/gradle.properties
+index 71f1313..65ac99d 100644
+--- a/node_modules/react-native-vision-camera-old/android/gradle.properties
++++ b/node_modules/react-native-vision-camera-old/android/gradle.properties
+@@ -14,7 +14,7 @@
+ VisionCameraOld_buildToolsVersion=30.0.0
+ VisionCameraOld_compileSdkVersion=31
+ VisionCameraOld_minSdkVersion=23
+-VisionCameraOld_kotlinVersion=1.6.20
++VisionCameraOld_kotlinVersion=2.1.21
+ VisionCameraOld_targetSdkVersion=31
+ VisionCameraOld_ndkVersion=21.4.7075529
+ android.enableJetifier=true
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp b/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp
 index d5a847d..5909302 100644
 --- a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp
