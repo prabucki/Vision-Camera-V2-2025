@@ -3,7 +3,7 @@ index 84b9f49..573abe9 100644
 --- a/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
 +++ b/node_modules/react-native-vision-camera-old/VisionCameraOld.podspec
 @@ -28,8 +28,7 @@ Pod::Spec.new do |s|
-
+ 
    s.pod_target_xcconfig = {
      "USE_HEADERMAP" => "YES",
 -    "HEADER_SEARCH_PATHS" => "\"$(PODS_TARGET_SRCROOT)/ReactCommon\" \"$(PODS_TARGET_SRCROOT)\" \"$(PODS_ROOT)/RCT-Folly\" \"$(PODS_ROOT)/boost\" \"$(PODS_ROOT)/boost-for-react-native\" \"$(PODS_ROOT)/DoubleConversion\" \"$(PODS_ROOT)/Headers/Private/React-Core\" ",
@@ -18,6 +18,26 @@ index 84b9f49..573abe9 100644
    s.dependency "React-Core"
 +  s.dependency "RNReanimated"
  end
+diff --git a/node_modules/react-native-vision-camera-old/android/.project b/node_modules/react-native-vision-camera-old/android/.project
+index 0e0a1ba..248e459 100644
+--- a/node_modules/react-native-vision-camera-old/android/.project
++++ b/node_modules/react-native-vision-camera-old/android/.project
+@@ -14,4 +14,15 @@
+ 	<natures>
+ 		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
+ 	</natures>
++	<filteredResources>
++		<filter>
++			<id>1752152425138</id>
++			<name></name>
++			<type>30</type>
++			<matcher>
++				<id>org.eclipse.core.resources.regexFilterMatcher</id>
++				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
+ </projectDescription>
 diff --git a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt b/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
 index 2ac94ef..dff8146 100644
 --- a/node_modules/react-native-vision-camera-old/android/CMakeLists.txt
@@ -37,11 +57,11 @@ index 2ac94ef..dff8146 100644
 +                "${NODE_MODULES_DIR}/react-native-reanimated/Common/cpp"
          )
  endif()
-
+ 
 @@ -183,7 +185,17 @@ if(${REACT_NATIVE_VERSION} LESS 71)
          )
  endif()
-
+ 
 -if(${REACT_NATIVE_VERSION} GREATER_EQUAL 71)
 +if(${REACT_NATIVE_VERSION} GREATER_EQUAL 76)
 +        # React Native 0.76+ uses merged libraries (libreactnative.so)
@@ -60,14 +80,14 @@ index 2ac94ef..dff8146 100644
 @@ -205,22 +217,47 @@ else()
          )
  endif()
-
+ 
 -find_package(react-native-reanimated REQUIRED CONFIG)
 -
  find_library(
          LOG_LIB
          log
  )
-
+ 
 +# Find reanimated libraries
 +find_library(
 +        REANIMATED_LIB
@@ -123,13 +143,13 @@ index 82750e5..440db3a 100644
 +++ b/node_modules/react-native-vision-camera-old/android/build.gradle
 @@ -114,7 +114,7 @@ def resolveBuildType() {
  }
-
+ 
  // WorkletRuntime.h file only exists since Reanimated 3.5.0.
 -def hasReanimated3 = file("${nodeModules}/react-native-reanimated/Common/cpp/ReanimatedRuntime/WorkletRuntime.h").exists()
 +def hasReanimated3 = file("${nodeModules}/react-native-reanimated/Common/cpp/worklets/WorkletRuntime/WorkletRuntime.h").exists()
  def disableFrameProcessors = rootProject.ext.has("disableFrameProcessors") ? rootProject.ext.get("disableFrameProcessors").asBoolean() : false
  def ENABLE_FRAME_PROCESSORS = hasReanimated3 && !disableFrameProcessors
-
+ 
 @@ -182,6 +182,8 @@ android {
                  "**/libhermes.so",
                  "**/libfolly_runtime.so",
@@ -144,7 +164,7 @@ index 82750e5..440db3a 100644
    def thirdPartyVersionsFile = new File("${nodeModules}/react-native/ReactAndroid/gradle.properties")
    def thirdPartyVersions = new Properties()
 -  thirdPartyVersions.load(new FileInputStream(thirdPartyVersionsFile))
-
+ 
 -  def BOOST_VERSION = thirdPartyVersions["BOOST_VERSION"]
 +  // Try to load versions from gradle.properties, but provide fallbacks for RN 0.76+
 +  if (thirdPartyVersionsFile.exists()) {
@@ -162,7 +182,7 @@ index 82750e5..440db3a 100644
 -  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"]
 +  def GLOG_VERSION = thirdPartyVersions["GLOG_VERSION"] ?: "0.3.5"
    def glog_file = new File(downloadsDir, "glog-${GLOG_VERSION}.tar.gz")
-
+ 
    task createNativeDepsDirectories {
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp b/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.cpp
 index d5a847d..5909302 100644
@@ -171,12 +191,12 @@ index d5a847d..5909302 100644
 @@ -102,7 +102,7 @@ void FrameProcessorRuntimeManagerOld::setFrameProcessor(jsi::Runtime& rnRuntime,
    __android_log_write(ANDROID_LOG_INFO, TAG,
                        "Setting new Frame Processor...");
-
+ 
 -  workletRuntime_ = reanimated::extractWorkletRuntime(rnRuntime, workletRuntimeValue);
 +  workletRuntime_ = worklets::extractWorkletRuntime(rnRuntime, workletRuntimeValue);
    jsi::Runtime &visionRuntime = workletRuntime_->getJSIRuntime();
    visionRuntime.global().setProperty(visionRuntime, "_FRAME_PROCESSOR", jsi::Value(true));
-
+ 
 @@ -115,7 +115,7 @@ void FrameProcessorRuntimeManagerOld::setFrameProcessor(jsi::Runtime& rnRuntime,
    // convert jsi::Function to a ShareableValue (can be shared across runtimes)
    __android_log_write(ANDROID_LOG_INFO, TAG,
@@ -184,7 +204,7 @@ index d5a847d..5909302 100644
 -  auto shareableWorklet = reanimated::extractShareableOrThrow<reanimated::ShareableWorklet>(rnRuntime, frameProcessor);
 +  auto shareableWorklet = worklets::extractShareableOrThrow<worklets::ShareableWorklet>(rnRuntime, frameProcessor);
    __android_log_write(ANDROID_LOG_INFO, TAG, "Successfully created worklet!");
-
+ 
    scheduler_->scheduleOnUI([=]() {
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.h b/node_modules/react-native-vision-camera-old/android/src/main/cpp/FrameProcessorRuntimeManagerOld.h
 index dac15d5..7d3e635 100644
@@ -193,11 +213,11 @@ index dac15d5..7d3e635 100644
 @@ -10,7 +10,8 @@
  #include <memory>
  #include <string>
-
+ 
 -#include "WorkletRuntime.h"
 +#include "worklets/WorkletRuntime/WorkletRuntime.h"
 +#include "worklets/SharedItems/Shareables.h"
-
+ 
  #include "CameraViewOld.h"
  #include "VisionCameraOldScheduler.h"
 @@ -45,7 +46,7 @@ class FrameProcessorRuntimeManagerOld : public jni::HybridClass<FrameProcessorRu
@@ -207,8 +227,92 @@ index dac15d5..7d3e635 100644
 -  std::shared_ptr<reanimated::WorkletRuntime> workletRuntime_;
 +  std::shared_ptr<worklets::WorkletRuntime> workletRuntime_;
    std::shared_ptr<vision::VisionCameraOldScheduler> scheduler_;
-
+ 
    jni::global_ref<CameraViewOld::javaobject> findCameraViewOldById(int viewId);
+diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+RecordVideo.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+RecordVideo.kt
+index 909fedd..ae2777e 100644
+--- a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+RecordVideo.kt
++++ b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld+RecordVideo.kt
+@@ -49,37 +49,35 @@ fun CameraViewOld.startRecording(options: ReadableMap, onRecordCallback: Callbac
+     recording = recording.withAudioEnabled()
+   }
+ 
+-  activeVideoRecording = recording.start(ContextCompat.getMainExecutor(context), object : Consumer<VideoRecordEvent> {
+-    override fun accept(event: VideoRecordEvent?) {
+-      if (event is VideoRecordEvent.Finalize) {
+-        if (event.hasError()) {
+-          // error occured!
+-          val error = when (event.error) {
+-            VideoRecordEvent.Finalize.ERROR_ENCODING_FAILED -> VideoEncoderError(event.cause)
+-            VideoRecordEvent.Finalize.ERROR_FILE_SIZE_LIMIT_REACHED -> FileSizeLimitReachedError(event.cause)
+-            VideoRecordEvent.Finalize.ERROR_INSUFFICIENT_STORAGE -> InsufficientStorageError(event.cause)
+-            VideoRecordEvent.Finalize.ERROR_INVALID_OUTPUT_OPTIONS -> InvalidVideoOutputOptionsError(event.cause)
+-            VideoRecordEvent.Finalize.ERROR_NO_VALID_DATA -> NoValidDataError(event.cause)
+-            VideoRecordEvent.Finalize.ERROR_RECORDER_ERROR -> RecorderError(event.cause)
+-            VideoRecordEvent.Finalize.ERROR_SOURCE_INACTIVE -> InactiveSourceError(event.cause)
+-            else -> UnknownCameraError(event.cause)
+-          }
+-          val map = makeErrorMap("${error.domain}/${error.id}", error.message, error)
+-          onRecordCallback(null, map)
+-        } else {
+-          // recording saved successfully!
+-          val map = Arguments.createMap()
+-          map.putString("path", event.outputResults.outputUri.toString())
+-          map.putDouble("duration", /* seconds */ event.recordingStats.recordedDurationNanos.toDouble() / 1000000.0 / 1000.0)
+-          map.putDouble("size", /* kB */ event.recordingStats.numBytesRecorded.toDouble() / 1000.0)
+-          onRecordCallback(map, null)
++  activeVideoRecording = recording.start(ContextCompat.getMainExecutor(context)) { event ->
++    if (event is VideoRecordEvent.Finalize) {
++      if (event.hasError()) {
++        // error occured!
++        val error = when (event.error) {
++          VideoRecordEvent.Finalize.ERROR_ENCODING_FAILED -> VideoEncoderError(event.cause)
++          VideoRecordEvent.Finalize.ERROR_FILE_SIZE_LIMIT_REACHED -> FileSizeLimitReachedError(event.cause)
++          VideoRecordEvent.Finalize.ERROR_INSUFFICIENT_STORAGE -> InsufficientStorageError(event.cause)
++          VideoRecordEvent.Finalize.ERROR_INVALID_OUTPUT_OPTIONS -> InvalidVideoOutputOptionsError(event.cause)
++          VideoRecordEvent.Finalize.ERROR_NO_VALID_DATA -> NoValidDataError(event.cause)
++          VideoRecordEvent.Finalize.ERROR_RECORDER_ERROR -> RecorderError(event.cause)
++          VideoRecordEvent.Finalize.ERROR_SOURCE_INACTIVE -> InactiveSourceError(event.cause)
++          else -> UnknownCameraError(event.cause)
+         }
+-
+-        // reset the torch mode
+-        camera!!.cameraControl.enableTorch(torch == "on")
++        val map = makeErrorMap("${error.domain}/${error.id}", error.message, error)
++        onRecordCallback(null, map)
++      } else {
++        // recording saved successfully!
++        val map = Arguments.createMap()
++        map.putString("path", event.outputResults.outputUri.toString())
++        map.putDouble("duration", /* seconds */ event.recordingStats.recordedDurationNanos.toDouble() / 1000000.0 / 1000.0)
++        map.putDouble("size", /* kB */ event.recordingStats.numBytesRecorded.toDouble() / 1000.0)
++        onRecordCallback(map, null)
+       }
++
++      // reset the torch mode
++      camera!!.cameraControl.enableTorch(torch == "on")
+     }
+-  })
++  }
+ }
+ 
+ @SuppressLint("RestrictedApi")
+diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld.kt
+index bf206ae..8e86082 100644
+--- a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld.kt
++++ b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/CameraViewOld.kt
+@@ -269,9 +269,8 @@ class CameraViewOld(context: Context, private val frameProcessorThread: Executor
+   private external fun initHybrid(): HybridData
+   private external fun frameProcessorCallback(frame: ImageProxy)
+ 
+-  override fun getLifecycle(): Lifecycle {
+-    return lifecycleRegistry
+-  }
++  override val lifecycle: Lifecycle
++    get() = lifecycleRegistry
+ 
+   /**
+    * Updates the custom Lifecycle to match the host activity's lifecycle, and if it's active we narrow it down to the [isActive] and [isAttachedToWindow] fields.
 diff --git a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt b/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
 index 9c2f651..5f804bf 100644
 --- a/node_modules/react-native-vision-camera-old/android/src/main/java/com/mrousavy/old/camera/frameprocessor/FrameProcessorRuntimeManagerOld.kt
@@ -224,18 +328,18 @@ index 9c2f651..5f804bf 100644
 @@ -12,6 +13,7 @@ import com.mrousavy.old.camera.ViewNotFoundError
  import java.lang.ref.WeakReference
  import java.util.concurrent.ExecutorService
-
+ 
 +@OptIn(FrameworkAPI::class)
  @Suppress("KotlinJniMissingFunction") // I use fbjni, Android Studio is not smart enough to realize that.
  class FrameProcessorRuntimeManagerOld(context: ReactApplicationContext, frameProcessorThread: ExecutorService) {
    companion object {
 diff --git a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
 index ae302d3..e532a13 100644
---- a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
-+++ b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm
+--- a/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm	
++++ b/node_modules/react-native-vision-camera-old/ios/Frame Processor/FrameProcessorRuntimeManagerOld.mm	
 @@ -20,27 +20,39 @@
  #import <ReactCommon/RCTTurboModuleManager.h>
-
+ 
  #ifndef VISION_CAMERA_DISABLE_FRAME_PROCESSORS
 -  #if __has_include(<RNReanimated/NativeReanimatedModule.h>)
 -    #if __has_include(<RNReanimated/WorkletRuntime.h>)
@@ -258,10 +362,10 @@ index ae302d3..e532a13 100644
 +    #warning REAModule.h header could not be found, Frame Processors are disabled. If you want to use Frame Processors, make sure you install react-native-reanimated 3.5.0 or above!
    #endif
  #endif
-
+ 
  #import "FrameProcessorCallback.h"
  #import "../React Utils/JSIUtils.h"
-
+ 
 -// Forward declarations for the Swift classes
 -__attribute__((objc_runtime_name("_TtC12VisionCameraOld12CameraQueues")))
 +// Import the generated Swift header
@@ -279,7 +383,7 @@ index ae302d3..e532a13 100644
  @interface CameraViewOld : UIView
  @property (nonatomic, copy) FrameProcessorCallback _Nullable frameProcessorCallback;
 @@ -48,7 +60,7 @@ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
-
+ 
  @implementation FrameProcessorRuntimeManagerOld {
  #ifdef ENABLE_FRAME_PROCESSORS
 -  std::shared_ptr<reanimated::WorkletRuntime> workletRuntime;
@@ -294,25 +398,25 @@ index ae302d3..e532a13 100644
 -    self->workletRuntime = reanimated::extractWorkletRuntime(rnRuntime, arguments[2].asObject(rnRuntime));
 +    self->workletRuntime = worklets::extractWorkletRuntime(rnRuntime, arguments[2].asObject(rnRuntime));
      jsi::Runtime &visionRuntime = self->workletRuntime->getJSIRuntime();
-
+ 
      // TODO: call reanimated::RuntimeDecorator::decorateRuntime(*runtime, "FRAME_PROCESSOR");
 @@ -129,7 +141,7 @@ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
      auto viewTag = arguments[0].asNumber();
      NSLog(@"FrameProcessorBindings: Adapting Shareable value from function (conversion to worklet)...");
-
+ 
 -    auto worklet = reanimated::extractShareableOrThrow<reanimated::ShareableWorklet>(rnRuntime, arguments[1].asObject(rnRuntime));
 +    auto worklet = worklets::extractShareableOrThrow<worklets::ShareableWorklet>(rnRuntime, arguments[1].asObject(rnRuntime));
      NSLog(@"FrameProcessorBindings: Successfully created worklet!");
-
+ 
      RCTExecuteOnMainQueue([=]() {
 @@ -140,8 +152,8 @@ __attribute__((objc_runtime_name("_TtC12VisionCameraOld10CameraViewOld")))
        dispatch_async(CameraQueues.frameProcessorQueue, [=]() {
          NSLog(@"FrameProcessorBindings: Converting worklet to Objective-C callback...");
-
+ 
 -        std::weak_ptr<reanimated::WorkletRuntime> weakWorkletRuntime = workletRuntime;
 -        std::weak_ptr<reanimated::ShareableWorklet> weakShareableWorklet = worklet;
 +        std::weak_ptr<worklets::WorkletRuntime> weakWorkletRuntime = workletRuntime;
 +        std::weak_ptr<worklets::ShareableWorklet> weakShareableWorklet = worklet;
-
+ 
          view.frameProcessorCallback = ^(FrameOld* frame) {
            auto workletRuntime = weakWorkletRuntime.lock();
