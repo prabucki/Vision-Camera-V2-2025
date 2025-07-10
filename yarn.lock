@@ -5527,9 +5527,9 @@ react-native-reanimated@^3.18.0:
     invariant "^2.2.4"
     react-native-is-edge-to-edge "1.1.7"
 
-"react-native-vision-camera-old@github:prabucki/react-native-vision-camera-old":
+"react-native-vision-camera-old@github:prabucki/react-native-vision-camera-old#2.17.1":
   version "2.16.8"
-  resolved "https://codeload.github.com/prabucki/react-native-vision-camera-old/tar.gz/768a790abfca9a6e9a675bd7a91e849076ea43b6"
+  resolved "https://codeload.github.com/prabucki/react-native-vision-camera-old/tar.gz/afce619893b47104d04ae685a8cceb493cef92a7"
 
 react-native@0.81.0-rc.0:
   version "0.81.0-rc.0"
