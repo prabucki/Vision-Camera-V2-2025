@@ -118,7 +118,7 @@ index 2ac94ef..dff8146 100644
 +        )
 +endif()
 diff --git a/node_modules/react-native-vision-camera-old/android/build.gradle b/node_modules/react-native-vision-camera-old/android/build.gradle
-index 82750e5..950da42 100644
+index 82750e5..dff5ef8 100644
 --- a/node_modules/react-native-vision-camera-old/android/build.gradle
 +++ b/node_modules/react-native-vision-camera-old/android/build.gradle
 @@ -114,7 +114,7 @@ def resolveBuildType() {
@@ -139,7 +139,17 @@ index 82750e5..950da42 100644
      ]
      // META-INF is duplicate by CameraX.
      exclude "META-INF/**"
-@@ -332,9 +334,13 @@ if (ENABLE_FRAME_PROCESSORS) {
+@@ -308,6 +310,9 @@ dependencies {
+     }
+   }
+
++  // Lifecycle dependency - required for backwards compatibility with RN < 0.77
++  implementation "androidx.lifecycle:lifecycle-common:2.9.1"
++
+   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.2"
+   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2"
+@@ -332,9 +337,13 @@ if (ENABLE_FRAME_PROCESSORS) {
    def thirdPartyNdkDir = new File("$buildDir/third-party-ndk")
    def thirdPartyVersionsFile = new File("${nodeModules}/react-native/ReactAndroid/gradle.properties")
    def thirdPartyVersions = new Properties()
