@@ -18,6 +18,7 @@ import {
 import {Camera, useCameraDevices, useFrameProcessor} from 'react-native-vision-camera-old';
 import { scanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
 import { runOnJS } from 'react-native-reanimated';
+import ScanningOverlay from './components/ScanningOverlay';
 
 function App() {
   const [hasPermission, setHasPermission] = useState(false);
@@ -25,13 +26,26 @@ function App() {
   const device = devices.back;
   const [barcodes, setBarcodes] = useState([]);
 
-  // const [frameProcessor, barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE], {
-  //   checkInverted: true,
-  // });
+  // Support all barcode formats
+  const supportedFormats = [
+    BarcodeFormat.QR_CODE,
+    BarcodeFormat.CODE_128,
+    BarcodeFormat.CODE_39,
+    BarcodeFormat.CODE_93,
+    BarcodeFormat.CODABAR,
+    BarcodeFormat.DATA_MATRIX,
+    BarcodeFormat.EAN_13,
+    BarcodeFormat.EAN_8,
+    BarcodeFormat.ITF,
+    BarcodeFormat.UPC_A,
+    BarcodeFormat.UPC_E,
+    BarcodeFormat.PDF417,
+    BarcodeFormat.AZTEC,
+  ];
 
   const frameProcessor = useFrameProcessor((frame) => {
     'worklet';
-    const detectedBarcodes = scanBarcodes(frame, [BarcodeFormat.QR_CODE], { checkInverted: true });
+    const detectedBarcodes = scanBarcodes(frame, supportedFormats, { checkInverted: false });
     runOnJS(setBarcodes)(detectedBarcodes);
   }, []);
 
@@ -89,18 +103,19 @@ function App() {
     );
   }
 
-  console.log('Detected Barcodes:', barcodes);
-
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={{color: 'white', position: 'absolute', top: 50, left: 20, zIndex: 1}}>Camera Active</Text>
-      <Camera
-        style={styles.camera}
-        device={device}
-        isActive={true}
-        frameProcessor={frameProcessor}
-        frameProcessorFps={5}
-      />
+      <View style={styles.cameraContainer}>
+        <Camera
+          style={styles.camera}
+          device={device}
+          isActive={true}
+          frameProcessor={frameProcessor}
+          frameProcessorFps={5}
+        />
+
+        <ScanningOverlay barcodes={barcodes} />
+      </View>
     </SafeAreaView>
   );
 }
@@ -108,6 +123,11 @@ function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
+  },
+  cameraContainer: {
+    flex: 1,
+    position: 'relative',
   },
   camera: {
     flex: 1,
@@ -116,7 +136,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingBottom: 10,
     fontSize: 18,
-    color: '#000',
+    color: '#fff',
     marginTop: 50,
   },
 });
