@@ -5,7 +5,7 @@
  * @format
  */
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -19,12 +19,17 @@ import {Camera, useCameraDevices, useFrameProcessor} from 'react-native-vision-c
 import { scanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
 import { runOnJS } from 'react-native-reanimated';
 import ScanningOverlay from './components/ScanningOverlay';
+import BenchmarkOverlay from './components/BenchmarkOverlay';
 
 function App() {
   const [hasPermission, setHasPermission] = useState(false);
   const devices = useCameraDevices();
   const device = devices.back;
   const [barcodes, setBarcodes] = useState([]);
+  const [frameCount, setFrameCount] = useState(0);
+  const [processingTime, setProcessingTime] = useState(0);
+
+  const frameProcessorFps = 5;
 
   // Support all barcode formats
   const supportedFormats = [
@@ -45,8 +50,14 @@ function App() {
 
   const frameProcessor = useFrameProcessor((frame) => {
     'worklet';
+    const startTime = Date.now();
     const detectedBarcodes = scanBarcodes(frame, supportedFormats, { checkInverted: false });
+    const endTime = Date.now();
+    const processingTimeMs = endTime - startTime;
+
     runOnJS(setBarcodes)(detectedBarcodes);
+    runOnJS(setFrameCount)(prev => prev + 1);
+    runOnJS(setProcessingTime)(processingTimeMs);
   }, []);
 
   useEffect(() => {
@@ -111,10 +122,16 @@ function App() {
           device={device}
           isActive={true}
           frameProcessor={frameProcessor}
-          frameProcessorFps={5}
+          frameProcessorFps={frameProcessorFps}
         />
 
         <ScanningOverlay barcodes={barcodes} />
+        <BenchmarkOverlay
+          frameProcessorFps={frameProcessorFps}
+          device={device}
+          frameCount={frameCount}
+          processingTime={processingTime}
+        />
       </View>
     </SafeAreaView>
   );
